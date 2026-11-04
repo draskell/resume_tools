@@ -4,7 +4,9 @@ __pycache__/
 .pytest_cache/
 .DS_Store
 
-# Private source documents, application materials, and generated previews.
+# Private source documents, application materials, previews, and theme samples.
 /assets/
+/sources/
 /experience.md
 /previews/
+/samples/
