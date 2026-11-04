@@ -5,7 +5,7 @@ description: Convert or regenerate Markdown resumes as local PDFs using the uv-m
 
 # Render a resume PDF
 
-1. Read root `AGENTS.md` and the intended Markdown input. Verify the resume begins with the name heading and the complete `email | phone | location | LinkedIn` contact line from `experience.md`'s Contact section, without placeholders. For tailoring, first use `tailor-resume`; do not render a JD or the comprehensive master as an application resume.
+1. Read root `AGENTS.md` and the intended Markdown input. Verify the resume begins with the name heading and the complete `email | phone | location | LinkedIn` contact line from `sources/experience.md`'s Contact section, without placeholders. For tailoring, first use `tailor-resume`; do not render a JD or the comprehensive master as an application resume.
 2. Run `uv sync` if the environment is not ready. Use the project's locked dependencies; do not invoke the removed hard-coded generators.
 3. Convert one file:
 

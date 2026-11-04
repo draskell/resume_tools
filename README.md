@@ -12,14 +12,15 @@ uv sync
 
 `uv.lock` pins the dependencies. No browser, office suite, external rendering service, or model API key is needed. Resume extraction/rendering stays local.
 
-Private documents are not distributed with the repository. Create a local `experience.md` containing your name, contact details, skills, employment history, accomplishments, education, and source notes before asking an agent to tailor a resume.
+Private documents are not distributed with the repository. Create a local `sources/experience.md` containing your name, contact details, skills, employment history, accomplishments, education, and source notes before asking an agent to tailor a resume. It must be available in the current workspace; a new worktree does not automatically include ignored private documents.
 
 ## Source of truth and layout
 
-`experience.md` is the private, comprehensive source for skills, employment, accomplishments, education, and training. Consolidate supported information from source documents and record provenance and conflict resolutions there. It is not a length-limited application resume.
+`sources/experience.md` is the private, comprehensive source for skills, employment, accomplishments, education, and training. Consolidate supported information from source documents and record provenance and conflict resolutions there. It is not a length-limited application resume.
 
 ```text
-experience.md                         # master evidence bank
+sources/
+  experience.md                       # private master evidence bank
 AGENTS.md                             # agent workflow and factual rules
 .github/skills/tailor-resume/SKILL.md
 .github/skills/render-resume-pdf/SKILL.md
@@ -36,7 +37,7 @@ Use lowercase hyphenated company names. For multiple roles at a company, use rol
 
 Repository-local skills and `AGENTS.md` explain the workflow to compatible agents. For example:
 
-> Read experience.md and use the tailor-resume skill to create a resume for Example Company, Senior Data Engineer, using this JD: [paste the full posting].
+> Read sources/experience.md and use the tailor-resume skill to create a resume for Example Company, Senior Data Engineer, using this JD: [paste the full posting].
 
 The agent reads the master and JD together, preserves the posting as `assets/example-company/job-description.md`, and writes a supported, relevant `resume.md`. It must not invent qualifications, infer employment from application folders, change dates/titles/metrics, or add JD requirements to the master. Important evidence gaps belong in the agent's response, not the application resume. Update the master only with new factual information supplied or approved by you.
 
@@ -118,6 +119,6 @@ Output uses US Letter, compact typography, theme-specific heading colors, page n
 uv run pytest
 ```
 
-The repository contains tooling, agent instructions, and synthetic tests. `.venv/`, caches, all of `assets/`, the personal `experience.md` master, and `previews/` are ignored by Git. Keep personal documents in those private locations; do not force-add them. Ignoring files does not back them up, so maintain a separate private backup.
+The repository contains tooling, agent instructions, and synthetic tests. `.venv/`, caches, all of `sources/`, `assets/`, and `previews/` are ignored by Git. The legacy root `experience.md` path remains ignored to protect older private copies; `sources/experience.md` is the canonical master. Keep personal documents in those private locations; do not force-add them. Ignoring files does not back them up, so maintain a separate private backup.
 
 The test suite runs without private documents. Additional checks against local resumes run when they are present. Hard-coded resume generators must not overwrite newer Markdown.
