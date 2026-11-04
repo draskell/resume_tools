@@ -18,12 +18,13 @@ from reportlab.lib.pagesizes import letter
 from reportlab.lib.styles import ParagraphStyle
 from reportlab.lib.units import inch
 from reportlab.pdfbase import pdfmetrics
-from reportlab.pdfbase.ttfonts import TTFont
+from reportlab.pdfbase.ttfonts import TTFont, TTFError
 from reportlab.platypus import Paragraph, SimpleDocTemplate
 from reportlab.platypus.doctemplate import LayoutError
 
 
 ASSETS_DIR = Path(__file__).resolve().parent / "assets"
+INTER_FONT_DIR = Path(__file__).resolve().parent / "fonts" / "inter"
 FONT_NAME = "ResumeVera"
 
 
@@ -33,11 +34,15 @@ class Theme:
     accent: str
     text_color: str = "#000000"
     bullet: str = "\u2022"
+    section_accent: str | None = None
 
 
 THEMES = {
     "basic": Theme(FONT_NAME, "#18344A"),
-    "developer": Theme("Courier", "#24292F", "#24292F", bullet="-"),
+    "developer": Theme(
+        "Courier", "#1D4ED8", "#24292F", bullet="-", section_accent="#0F766E"
+    ),
+    "discord": Theme("ResumeInter", "#5865F2"),
 }
 
 
@@ -73,23 +78,42 @@ def register_fonts(theme: str = "basic") -> frozenset[int]:
                 continue
             courier_coverage.add(ord(char))
         return frozenset(courier_coverage)
-    directory = Path(reportlab.__file__).parent / "fonts"
+    if selected.font_name == "ResumeInter":
+        directory = INTER_FONT_DIR
+        faces = (
+            ("", "Inter-Regular.ttf"),
+            ("-Bold", "Inter-Bold.ttf"),
+            ("-Italic", "Inter-Italic.ttf"),
+            ("-BoldItalic", "Inter-BoldItalic.ttf"),
+        )
+    else:
+        directory = Path(reportlab.__file__).parent / "fonts"
+        faces = (
+            ("", "Vera.ttf"),
+            ("-Bold", "VeraBd.ttf"),
+            ("-Italic", "VeraIt.ttf"),
+            ("-BoldItalic", "VeraBI.ttf"),
+        )
     coverage = []
-    for suffix, filename in (
-        ("", "Vera.ttf"),
-        ("-Bold", "VeraBd.ttf"),
-        ("-Italic", "VeraIt.ttf"),
-        ("-BoldItalic", "VeraBI.ttf"),
-    ):
-        font = TTFont(FONT_NAME + suffix, str(directory / filename))
+    for suffix, filename in faces:
+        path = directory / filename
+        if not path.is_file():
+            raise ConversionError(
+                f"Missing theme font: {path}. Restore the project's bundled fonts "
+                "or reinstall its locked dependencies."
+            )
+        try:
+            font = TTFont(selected.font_name + suffix, str(path))
+        except TTFError as error:
+            raise ConversionError(f"Cannot load theme font {path}: {error}") from error
         pdfmetrics.registerFont(font)
         coverage.append(set(font.face.charToGlyph))
     pdfmetrics.registerFontFamily(
-        FONT_NAME,
-        normal=FONT_NAME,
-        bold=FONT_NAME + "-Bold",
-        italic=FONT_NAME + "-Italic",
-        boldItalic=FONT_NAME + "-BoldItalic",
+        selected.font_name,
+        normal=selected.font_name,
+        bold=selected.font_name + "-Bold",
+        italic=selected.font_name + "-Italic",
+        boldItalic=selected.font_name + "-BoldItalic",
     )
     return frozenset.intersection(*(frozenset(chars) for chars in coverage))
 
@@ -157,13 +181,16 @@ def make_styles(theme: str = "basic") -> dict[str, ParagraphStyle]:
     )
     styles = {"body": body}
     for level in range(1, 7):
+        heading_color = selected.accent if level <= 2 else selected.text_color
+        if level == 2 and selected.section_accent:
+            heading_color = selected.section_accent
         styles[f"h{level}"] = ParagraphStyle(
             f"Heading{level}",
             parent=body,
             fontName=selected.font_name + "-Bold",
             fontSize=18 if level == 1 else 11 if level == 2 else 10,
             leading=22 if level == 1 else 14 if level == 2 else 12.5,
-            textColor=colors.HexColor(selected.accent if level <= 2 else selected.text_color),
+            textColor=colors.HexColor(heading_color),
             spaceBefore=0 if level == 1 else 8 if level == 2 else 4,
             spaceAfter=5 if level <= 2 else 2,
             keepWithNext=True,
@@ -331,7 +358,8 @@ def main(argv: list[str] | None = None) -> int:
         "--theme",
         choices=THEMES,
         default="basic",
-        help="basic: current sans-serif style (default); developer: light monospace style",
+        help="basic: compact sans-serif (default); developer: blue/teal monospace; "
+        "discord: Inter with blurple accents",
     )
     args = parser.parse_args(argv)
     if (args.input is not None) == args.all:

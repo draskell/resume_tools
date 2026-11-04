@@ -12,42 +12,86 @@ uv sync
 
 `uv.lock` pins the dependencies. No browser, office suite, external rendering service, or model API key is needed. Resume extraction/rendering stays local.
 
-Private documents are not distributed with the repository. Create a local `sources/experience.md` containing your name, contact details, skills, employment history, accomplishments, education, and source notes before asking an agent to tailor a resume. It must be available in the current workspace; a new worktree does not automatically include ignored private documents.
+Private documents are not distributed with the repository. Create a local `sources/experience.md` containing your name, contact details, skills, employment history, accomplishments, education, and source notes before asking an agent to tailor a resume.
 
 ## Source of truth and layout
 
-`sources/experience.md` is the private, comprehensive source for skills, employment, accomplishments, education, and training. Consolidate supported information from source documents and record provenance and conflict resolutions there. It is not a length-limited application resume.
+`sources/experience.md` is the private, job-independent source for skills, employment, accomplishments, education, and training. Consolidate supported facts, evidence IDs, and conflict resolutions there. Keep target applications, JD requirements, output filenames, and screening feedback out of it. Original import filenames and application-folder context are preserved separately in the private `sources/provenance.md` ledger, which is not an input to routine tailoring.
 
 ```text
 sources/
-  experience.md                       # private master evidence bank
+  experience.md                       # master evidence bank
+  provenance.md                       # historical import ledger; maintenance only
+  optional-source-archive.pdf          # already integrated; not needed for tailoring
 AGENTS.md                             # agent workflow and factual rules
 .github/skills/tailor-resume/SKILL.md
+.github/skills/review-resume/SKILL.md
 .github/skills/render-resume-pdf/SKILL.md
 assets/
-  example-company/
+  example-role/
     job-description.md                # supplied JD
-    resume.md                         # tailored application resume
-    resume.pdf                        # derived output, when requested
+    YYYYMMDD_resume.md                # generated, using current local date
+    YYYYMMDD_resume.pdf               # same basename, requested style only
 ```
 
-Use lowercase hyphenated company names. For multiple roles at a company, use role-specific subfolders rather than overwriting another application. Keep existing dated filenames when importing documents, and make subsequent edits in Markdown before regenerating PDFs. External source archives need not be present once their supported evidence has been consolidated into the private master.
+Any user-selected subfolder under `assets/` works, including nested role folders. No company-name convention, registry, or code edits are needed to add a new target. Paths and symlinks must stay within the project's `assets/` directory. Keep older outputs and sibling folders unchanged. External source archives need not be present once their supported evidence has been consolidated into the private master.
+
+The LinkedIn export received a **one-time integration** into the master, with page references and user-approved conflict resolutions. Future JD matching uses only the integrated master and the JD; it does not reread or automatically discover source PDFs. Keep any archive under the ignored `sources/` folder and revisit it only on an explicit source-maintenance request. An export date alone does not resolve factual conflicts, and an omitted fact does not retract existing evidence.
 
 ## Tailor a resume with an agent
 
-Repository-local skills and `AGENTS.md` explain the workflow to compatible agents. For example:
+Put a JD in a target folder, then tell the agent the **folder and style**:
 
-> Read sources/experience.md and use the tailor-resume skill to create a resume for Example Company, Senior Data Engineer, using this JD: [paste the full posting].
+> Generate a resume in assets/example-role using developer.
 
-The agent reads the master and JD together, preserves the posting as `assets/example-company/job-description.md`, and writes a supported, relevant `resume.md`. It must not invent qualifications, infer employment from application folders, change dates/titles/metrics, or add JD requirements to the master. Important evidence gaps belong in the agent's response, not the application resume. Update the master only with new factual information supplied or approved by you.
+That's the complete normal request. `basic` is used if you omit the style. The agent reads the folder's JD and private experience bank, writes a truthful tailored resume, runs the automatic blind screen, and produces exactly one pair: `YYYYMMDD_resume.md` and `YYYYMMDD_resume.pdf`, using the current local date resolved once at request start (`date +%Y%m%d`). The PDF uses only the requested style and must be at most two pages unless you explicitly change the limit. No separate PDF request or unrequested theme variants.
+
+The JD can have any filename, including `job-description.md` or `*_jd.md`, and be Markdown, plain text, or a locally text-extractable PDF. The agent inspects immediate files only, not sibling or nested applications, and excludes existing resumes. It leaves the JD's name and contents unchanged. Missing or multiple plausible JDs require clarification, not a guessed selection or combined posting.
+
+Existing same-day outputs are protected. A request to regenerate, update, or restyle authorizes replacement of only that day's pair; otherwise the agent asks before overwriting. Replacements are staged in ignored `previews/` and verified before publication, preserving the old pair on screening/rendering failure. Successful generation returns only the two output paths; routine review details stay internal. A material blocker is reported rather than disguised as success.
+
+The author must not invent qualifications, infer employment from application folders, change dates/titles/metrics, or add JD requirements to the master. Update the bank only with new factual information supplied or approved by you. Repository-local skills and `AGENTS.md` define this agent workflow; Python renders the approved Markdown, not AI-generated content by itself.
+
+Resume-facing entries use the master's approved title, normally the highest/latest title for an employer's overall tenure. Detailed promotions and alternate titles stay in the master for reference and detailed histories; they are not extra concurrent jobs or a claim that the highest title was held for the whole tenure.
 
 Every resume starts with the name, followed by one contact line in the order **email | phone | location | LinkedIn**, copied from the master's Contact section. This header must appear above the title or summary in both Markdown and PDF, with no placeholders or missing fields.
 
-Tailoring produces Markdown first. Ask for PDF conversion separately or explicitly include it in the request. Skills are instructions for your agent, not a standalone automated writing service.
+Both formats are included in every target-folder generation request. Standalone conversion or restyling remains available without rerunning authoring or screening.
+
+### Cloud-aware tailoring
+
+When the JD identifies an AWS environment, the author emphasizes documented AWS experience and minimizes unrelated Azure branding, retaining relevant capabilities without a documented AWS equivalent. A cloud-neutral JD gets capability-led wording rather than assumptions about the company's platform. Prefer concise underlying tool names such as S3 and Airflow; use MWAA only when the JD requests it or hosting details matter.
+
+Never relabel a historical project from one cloud to another. EMR and Synapse overlap for Spark/distributed processing, not every warehousing or orchestration feature. The author can select documented EMR work or describe a transferable capability without a brand, but cannot rewrite an Azure project as an AWS project. Newly supplied global skills do not establish use at a specific employer.
+
+### Automatic rubber-duck review
+
+Every tailored resume uses two roles: the author knows the private experience bank; one independent, read-only reviewer sees **only the JD and resume**. The reviewer receives a self-contained hiring-screen rubric, not this repository's authoring instructions, source filenames, private evidence, or author explanations. It simulates an automated resume screen at the hiring organization and returns **`PASS` or `FAIL` with rationale**, supported by JD requirements and visible resume evidence.
+
+The reviewer assesses demonstrated skills, role scope/seniority, relevant accomplishments, clarity, and material qualification gaps. It distinguishes required qualifications from bonuses and credits equivalents when allowed by the JD. "Not shown in the resume" is not proof the candidate lacks an experience. This is a simulation, not the employer's actual ATS, a validated ATS score, or a prediction of the hiring decision.
+
+On `FAIL`, the author privately searches the master for additional true details or clearer transferable experience addressing the concerns, revises the resume, and rechecks every factual claim. The reviewer sees only the JD and revised resume, never off-resume assurances or private citations. **Do not invent qualifications, strengthen metrics, or relabel adjacent work as direct domain experience to win a pass.** A real qualification gap can remain a legitimate failure.
+
+The limit is **3 reviewer passes**, allowing up to **2 revision cycles**. Finish early when the current draft receives `PASS` and the author finds no substantive factual issues. Optional stylistic nits or preferred-qualification gaps may remain. If `FAIL` remains at the cap, or no useful supported revision is possible, preserve the honest draft and report the rationale as **incomplete**, not automatically approved. Unavailable/failed screening must be disclosed, not misrepresented as a candidate rejection. Comments stay in the session, outside resumes and tracked files.
+
+Start each request with a fresh reviewer context and reuse it only for that request's re-screens. Do not reuse the previous source-aware reviewer. If a host automatically exposes private author context that cannot be excluded, report that blind review is unavailable. The input separation is an instruction-level boundary, not a filesystem sandbox.
+
+The author keeps the model selected for the current session. The reviewer uses the **configured subagent model** by default, which may be different. You can override only the reviewer for a request, for example: "Tailor this resume and use [model ID] as the reviewer." No reviewer model is pinned, and an unavailable requested model is reported rather than silently replaced. Without an explicit override, runtime model, reasoning, and context preferences apply.
+
+Review adds sequential model work and therefore increases runtime and credit use; there is no fixed multiplier or enforced credit budget. This is an instruction-driven workflow requiring a host with independent subagent support, not a new Python command or external model service. Contract tests check the instructions, not whether every host or model will obey them.
+
+Independent review covers **Markdown content only**, not PDF layout or pagination, and does not render PDFs. The writer then renders the chosen style and checks the actual PDF's two-page limit, complete text, header, and layout. A resulting Markdown change must be reviewed within the remaining budget; a page limit cannot be verified from Markdown alone. Standalone conversion or theme changes do not initiate the content-review loop.
 
 ## Convert Markdown to PDF
 
-Convert a single resume (paths are relative to your working directory):
+The target-folder workflow uses explicit output naming for the matching dated pair (substitute the actual date for `YYYYMMDD`):
+
+```sh
+uv run python resume_pdf.py assets/example-role/YYYYMMDD_resume.md \
+  --theme developer --output assets/example-role/YYYYMMDD_resume.pdf
+```
+
+The commands below are standalone rendering utilities, not the agent's resume-generation workflow. Convert a single existing resume (paths are relative to your working directory):
 
 ```sh
 uv run python resume_pdf.py assets/example-company/resume.md
@@ -80,22 +124,39 @@ Original PDFs may lag behind edited Markdown. The converter never rewrites Markd
 
 ## Themes
 
-Choose a theme at conversion time; the same Markdown works with either style.
+Choose a theme at conversion time; the same Markdown works with any theme.
 
 | Theme | Style | Default output |
 | --- | --- | --- |
 | `basic` (default) | Current compact sans-serif layout, restrained blue headings, white background | `resume.pdf` |
-| `developer` | Monospace Courier text and headings, hyphen bullets, charcoal accents, white background; an editor-inspired look without terminal decoration | `resume.developer.pdf` |
+| `developer` | Monospace Courier, blue name/link accents, teal section headings, charcoal body, hyphen bullets, white background | `resume.developer.pdf` |
+| `discord` | Basic layout with Inter text and blurple (`#5865F2`) name, section headings, and links; white background | `resume.discord.pdf` |
 
 ```sh
 uv run python resume_pdf.py assets/example-company/resume.md --theme developer
 uv run python resume_pdf.py --all --theme developer
 uv run python resume_pdf.py assets/example-company/resume.md --theme basic
+uv run python resume_pdf.py assets/example-company/resume.md --theme discord
 ```
 
-Non-default themes get their own filename so a comparison cannot accidentally replace the basic PDF. `--output` overrides that naming when needed, and `--force` is still required to replace any existing destination. Omit `--theme` to retain the original behavior.
+For standalone comparisons, non-default themes get their own filename so they cannot accidentally replace the basic PDF. Target-folder generation always overrides that default with `--output .../YYYYMMDD_resume.pdf`, creating just the requested style. `--force` is still required to replace an existing converter destination after authorization and staging. Omit `--theme` to retain the original basic rendering.
 
-The developer theme is a restrained monospace interpretation, not an exact reproduction of an xtools preview. Both themes retain selectable text, clickable links, the complete contact header, and the same page dimensions and pagination rules. Font widths change wrapping, so review the page count when switching themes; a theme never removes content or automatically shrinks text to meet a page limit.
+The developer theme is a restrained monospace interpretation, not an exact reproduction of an xtools preview. All themes retain selectable text, clickable links, the complete contact header, and the same page dimensions and pagination rules. Font widths change wrapping, so review the page count when switching themes; a theme never removes content or automatically shrinks text to meet a page limit.
+
+The discord theme is only a typography/color nod to the [developer docs](https://docs.discord.com/developers/quick-start/overview-of-apps), not a copy of the site or an official endorsement. Its primary accent is the docs' `#5865F2`. The site loads Inter as well as custom gg sans faces; [Discord's font FAQ](https://support.discord.com/hc/en-us/articles/9507780972951-gg-sans-Font-Update-FAQ) does not permit gg sans in other projects, so this theme explicitly uses open-source Inter instead.
+
+Inter's unmodified Regular, Bold, Italic, and BoldItalic static TrueType faces are bundled in `fonts/inter/` from the official [Inter 4.1 release](https://github.com/rsms/inter/releases/tag/v4.1), under the included SIL Open Font License (`fonts/inter/LICENSE.txt`). The source `Inter-4.1.zip` SHA256 is `9883fdd4a49d4fb66bd8177ba6625ef9a64aa45899767dde3d36aa425756b11e`. No extra dependencies or runtime font downloads are needed.
+
+### Theme samples
+
+Every newly added theme must include a rendered sample in the Git-ignored `samples/` folder, as required by the rendering skill. Use the request's selected resume unchanged (or synthetic content when no source was selected), and use that same source for all comparisons:
+
+```sh
+uv run python resume_pdf.py assets/example-role/YYYYMMDD_resume.md \
+  --theme discord --output samples/YYYYMMDD_resume.discord.pdf
+```
+
+Name samples `<resume-stem>.<theme>.pdf`, including `.basic.pdf` for a basic comparison. Check layout, page count, complete text, links, fonts, and colors. Do not alter resume wording, put comparisons in application folders, or replace application PDFs. Samples remain private; the licensed font assets are redistributable tooling, not private resume material.
 
 ### Sources for restrained Markdown theme ideas
 
@@ -103,13 +164,13 @@ The developer theme is a restrained monospace interpretation, not an exact repro
 - [markdown-cv](https://github.com/elipapa/markdown-cv): resume-specific HTML/print styling, with `kjhealy` and `davewhipp` layouts.
 - [Typora theme gallery](https://theme.typora.io/): a broader source of typography and spacing ideas. Favor light, single-column themes without sidebars, large banners, or heavy decoration.
 
-These are design references, not installed or bundled themes. Their CSS cannot be applied directly to this ReportLab renderer; compatible typography, spacing, and color choices must be implemented as local PDF themes. No remote stylesheets, fonts, or personal-document uploads are used.
+These are design references, not installed or bundled themes. Their CSS cannot be applied directly to this ReportLab renderer; compatible typography, spacing, and color choices must be implemented as local PDF themes. No remote stylesheets, runtime font downloads, or personal-document uploads are used.
 
 ## Markdown and layout
 
 Supported: headings (`#` through `######`), paragraphs, bold/italic text, unordered lists (including nesting), explicit line breaks, and inline links with `http`, `https`, or `mailto` destinations. Use `###` for employers followed by a paragraph for role/dates to keep those blocks with the following content.
 
-Tables, images, raw HTML, blockquotes, ordered lists, inline code, fenced/indented code, and horizontal rules are explicitly rejected rather than silently omitted. Unrecognized plain Markdown text follows CommonMark rules. Font coverage is checked for the selected theme: bundled Bitstream Vera faces serve `basic`, standard PDF Courier faces serve `developer`, and the PDF Symbol font supplies right arrows. Unsupported characters produce an actionable error instead of missing-glyph boxes; the two font families have different character coverage.
+Tables, images, raw HTML, blockquotes, ordered lists, inline code, fenced/indented code, and horizontal rules are explicitly rejected rather than silently omitted. Unrecognized plain Markdown text follows CommonMark rules. Font coverage is checked for the selected theme: bundled Bitstream Vera faces serve `basic`, standard PDF Courier faces serve `developer`, bundled Inter faces serve `discord`, and the PDF Symbol font supplies right arrows. Unsupported characters produce an actionable error instead of missing-glyph boxes; the font families have different character coverage.
 
 Output uses US Letter, compact typography, theme-specific heading colors, page numbers, selectable text, and clickable links. Page counts are natural, not forcibly capped at two pages. Edit the resume for relevance/readability rather than shrinking text indefinitely.
 
@@ -119,6 +180,6 @@ Output uses US Letter, compact typography, theme-specific heading colors, page n
 uv run pytest
 ```
 
-The repository contains tooling, agent instructions, and synthetic tests. `.venv/`, caches, all of `sources/`, `assets/`, and `previews/` are ignored by Git. The legacy root `experience.md` path remains ignored to protect older private copies; `sources/experience.md` is the canonical master. Keep personal documents in those private locations; do not force-add them. Ignoring files does not back them up, so maintain a separate private backup.
+The repository contains tooling, agent instructions, licensed font assets, and synthetic tests. `.venv/`, caches, all of `sources/` (including the master and archived PDFs), all of `assets/`, `previews/`, and `samples/` are ignored by Git. The legacy root-master ignore rule is retained as a safeguard. Keep personal documents in those private locations; do not force-add them. Ignoring files does not back them up, so maintain a separate private backup.
 
 The test suite runs without private documents. Additional checks against local resumes run when they are present. Hard-coded resume generators must not overwrite newer Markdown.
