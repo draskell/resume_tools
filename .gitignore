@@ -1,0 +1,10 @@
+.venv/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.DS_Store
+
+# Private source documents, application materials, and generated previews.
+/assets/
+/experience.md
+/previews/
