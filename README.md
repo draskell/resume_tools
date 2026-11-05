@@ -32,6 +32,7 @@ assets/
     job-description.md                # supplied JD
     YYYYMMDD_resume.md                # generated, using current local date
     YYYYMMDD_resume.pdf               # same basename, requested style only
+    YYYYMMDD_resume_notes.md          # scored review of that exact resume
 ```
 
 Any user-selected subfolder under `assets/` works, including nested role folders. No company-name convention, registry, or code edits are needed to add a new target. Paths and symlinks must stay within the project's `assets/` directory. Keep older outputs and sibling folders unchanged. External source archives need not be present once their supported evidence has been consolidated into the private master.
@@ -48,7 +49,7 @@ That's the complete normal request. `basic` is used if you omit the style. The a
 
 The JD can have any filename, including `job-description.md` or `*_jd.md`, and be Markdown, plain text, or a locally text-extractable PDF. The agent inspects immediate files only, not sibling or nested applications, and excludes existing resumes. It leaves the JD's name and contents unchanged. Missing or multiple plausible JDs require clarification, not a guessed selection or combined posting.
 
-Existing same-day outputs are protected. A request to regenerate, update, or restyle authorizes replacement of only that day's pair; otherwise the agent asks before overwriting. Replacements are staged in ignored `previews/` and verified before publication, preserving the old pair on screening/rendering failure. Successful generation returns only the two output paths; routine review details stay internal. A material blocker is reported rather than disguised as success.
+Existing same-day outputs are protected. A request to regenerate, update, or restyle authorizes replacement of only that day's pair and associated notes; otherwise the agent asks before overwriting. Replacements are staged in ignored `previews/` and verified before publication, preserving the old pair and notes on screening/rendering failure. Successful generation returns the three output paths; review details are saved in the companion notes. A material blocker is reported rather than disguised as success.
 
 The author must not invent qualifications, infer employment from application folders, change dates/titles/metrics, or add JD requirements to the master. Update the bank only with new factual information supplied or approved by you. Repository-local skills and `AGENTS.md` define this agent workflow; Python renders the approved Markdown, not AI-generated content by itself.
 
@@ -64,6 +65,16 @@ When the JD identifies an AWS environment, the author emphasizes documented AWS 
 
 Never relabel a historical project from one cloud to another. EMR and Synapse overlap for Spark/distributed processing, not every warehousing or orchestration feature. The author can select documented EMR work or describe a transferable capability without a brand, but cannot rewrite an Azure project as an AWS project. Newly supplied global skills do not establish use at a specific employer.
 
+### Match score and companion notes
+
+Each screen also returns an evidence-based **match score /100**: required-qualification alignment 40, relevant scope/ownership/leadership 25, concrete accomplishment/delivery evidence 20, clarity/chronology 10, and contactability/Markdown usability 5. The reviewer defines item weights from the JD on the first round and retains them across rounds. Evidence anchors award 0%, 25%, 50%, 75%, or 100% of each item's points; the report explains awards and reconciles subtotals. **PASS requires at least 85/100 and no material required-qualification gap or other blocking concern.** A high score cannot override a missing required qualification. Missing bonuses do not reduce the score or independently cause failure. This is a simulated match assessment, not an actual ATS score, probability, or market-calibrated prediction.
+
+The reviewer stays blind and read-only. The author saves its Markdown report verbatim in `<resume-stem>_notes.md`, for example `YYYYMMDD_resume_notes.md`, with a metadata header identifying the resume basename and SHA-256 of its exact Markdown bytes. Notes contain the score breakdown, verdict, rationale, and current blocking/optional shortcomings. They are private and ignored, never used as a JD or rendered as a PDF; `*_resume_notes.md` is excluded from posting discovery.
+
+After each re-screen, staged notes are replaced to describe the actual current reviewed draft. Publish matching notes with the verified Markdown/PDF pair; preserve the old pair and notes if a replacement fails. Same-day regeneration authorization includes refreshing associated notes. A failed draft and matching report remain in `previews/`, with paths and the blocker reported; unavailable screening receives no invented score or FAIL verdict.
+
+Successful tailoring returns **three output paths**. Standalone conversion/restyling neither creates notes nor triggers another screen.
+
 ### Automatic rubber-duck review
 
 Every tailored resume uses two roles: the author knows the private experience bank; one independent, read-only reviewer sees **only the JD and resume**. The reviewer receives a self-contained hiring-screen rubric, not this repository's authoring instructions, source filenames, private evidence, or author explanations. It simulates an automated resume screen at the hiring organization and returns **`PASS` or `FAIL` with rationale**, supported by JD requirements and visible resume evidence.
@@ -72,7 +83,7 @@ The reviewer assesses demonstrated skills, role scope/seniority, relevant accomp
 
 On `FAIL`, the author privately searches the master for additional true details or clearer transferable experience addressing the concerns, revises the resume, and rechecks every factual claim. The reviewer sees only the JD and revised resume, never off-resume assurances or private citations. **Do not invent qualifications, strengthen metrics, or relabel adjacent work as direct domain experience to win a pass.** A real qualification gap can remain a legitimate failure.
 
-The limit is **3 reviewer passes**, allowing up to **2 revision cycles**. Finish early when the current draft receives `PASS` and the author finds no substantive factual issues. Optional stylistic nits or preferred-qualification gaps may remain. If `FAIL` remains at the cap, or no useful supported revision is possible, preserve the honest draft and report the rationale as **incomplete**, not automatically approved. Unavailable/failed screening must be disclosed, not misrepresented as a candidate rejection. Comments stay in the session, outside resumes and tracked files.
+The limit is **3 reviewer passes**, allowing up to **2 revision cycles**. Finish early when the current draft receives `PASS` and the author finds no substantive factual issues. Optional stylistic nits or preferred-qualification gaps may remain. If `FAIL` remains at the cap, or no useful supported revision is possible, preserve the honest draft and report the rationale as **incomplete**, not automatically approved. Unavailable/failed screening must be disclosed, not misrepresented as a candidate rejection. Reviewer comments are persisted in companion notes, outside resumes and tracked files; private author dispositions remain only in the session.
 
 Start each request with a fresh reviewer context and reuse it only for that request's re-screens. Do not reuse the previous source-aware reviewer. If a host automatically exposes private author context that cannot be excluded, report that blind review is unavailable. The input separation is an instruction-level boundary, not a filesystem sandbox.
 

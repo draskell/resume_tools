@@ -153,6 +153,7 @@ def test_discovery_recurses_and_excludes_non_resumes(tmp_path):
     for filename in (
         "sources/experience.md", "README.md", "AGENTS.md", "a-company/job-description.md",
         "b-company/role/job-description.md", ".github/skills/tailor-resume/SKILL.md",
+        "a-company/20260102_resume_notes.md", "b-company/role/resume_notes.md",
     ):
         write_source(tmp_path / filename)
     assert converter.discover_resumes(tmp_path) == expected
@@ -299,7 +300,9 @@ def test_real_resumes_have_canonical_contact_headers(source):
     master_path = ROOT / "sources" / "experience.md"
     contact_section = master_path.read_text().split("## Contact\n\n", 1)[1]
     name, contact = contact_section.split("\n\n")[:2]
-    assert source.read_text().startswith(f"# {name}\n\n{contact}\n\n")
+    lines = source.read_text().splitlines()
+    assert lines[0] == f"# {name}"
+    assert next(line for line in lines[1:] if line.strip()) == contact
     plain_contact = converter.markdown_story(contact)[0].getPlainText()
     reader = PdfReader(source.with_suffix(".pdf"))
     assert reader.pages[0].extract_text().splitlines()[:3] == ["1", name, plain_contact]
@@ -471,6 +474,61 @@ def test_reviewer_is_blind_read_only_and_returns_screening_rationale():
         "ACCEPT", "REQUEST_CHANGES",
     ):
         assert forbidden not in review
+
+
+def test_scored_review_weights_threshold_and_evidence_contract():
+    review = (ROOT / ".github/skills/review-resume/SKILL.md").read_text()
+    weights = [
+        int(points)
+        for points in re.findall(r"^\| (?!Total\b)[^|\n]+ \| (\d+) \|$", review, re.M)
+    ]
+    assert weights == [40, 25, 20, 10, 5]
+    assert sum(weights) == 100
+    for required in (
+        "PASS threshold: 85/100", "compare the unrounded total",
+        "Match score:", "Required-qualification gate: CLEAR | BLOCKED",
+        "Keep all item definitions, maxima, and category weights unchanged",
+        "0%", "25%", "50%", "75%", "100%",
+        "required-qualification gate overrides the total",
+        "Missing preferred/bonus skills must not lower the score",
+        "Optional stylistic nits must not become blocking deductions",
+        "JD evidence", "resume evidence", "category subtotals",
+        "current shortcomings", "optional gaps on `PASS`",
+        "not a validated ATS score", "Do not edit any files",
+        "persists it verbatim", "No filesystem reads or output paths",
+    ):
+        assert required in review
+
+
+@pytest.mark.parametrize("filename", [
+    "AGENTS.md", "README.md", ".github/skills/tailor-resume/SKILL.md",
+    ".github/skills/render-resume-pdf/SKILL.md",
+])
+def test_companion_notes_identity_publication_and_exclusion_contract(filename):
+    text = (ROOT / filename).read_text()
+    for required in (
+        "YYYYMMDD_resume_notes.md", "*_resume_notes.md", "SHA-256",
+        "verbatim", "read-only", "previews/", "notes", "Standalone",
+    ):
+        assert required in text
+    assert "only the two" not in text
+    assert "supersedes" not in text
+
+
+def test_writer_notes_match_current_review_and_preserve_existing_outputs():
+    tailor = (ROOT / ".github/skills/tailor-resume/SKILL.md").read_text()
+    for required in (
+        "<resume-stem>_notes.md", "Replace the staged report after each re-screen",
+        "do not accumulate obsolete shortcomings",
+        "SHA-256 against the final Markdown",
+        "Never edit a reviewed draft without re-screening",
+        "Preserve an existing published pair and its notes",
+        "retain the latest reviewed draft and matching notes in staging",
+        "An unavailable screen has no invented score or FAIL verdict",
+        "no filesystem paths", "private factual evidence and author dispositions",
+        "Check conflicts for all three outputs",
+    ):
+        assert required in tailor
 
 
 def test_writer_loop_requires_blind_pass_and_private_factual_validation():
